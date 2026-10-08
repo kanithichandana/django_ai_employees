@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404, render
 from .models import Order, RefundRequest
 from django.contrib.auth.decorators import login_required
+from support.models import Conversation
 
 
 @login_required
@@ -17,9 +18,19 @@ def order_detail(request,order_id):
 
     #get refund history for this order
     refunds = RefundRequest.objects.filter(order=order)
+
+    try:
+        conversation = Conversation.objects.get(user=request.user, order=order)
+        previous_messages = conversation.messages.order_by("created_at")
+    except Conversation.DoesNotExist:
+        conversation = None
+        previous_messages =[]
+
     context ={
         'order':order,
         'refunds':refunds,
+        "conversation":conversation,
+        "previous_messages":previous_messages,
     }
 
     return render(request,'order_detail.html',context)
